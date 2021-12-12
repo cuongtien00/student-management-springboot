@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8" http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    <title>Students Management</title>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script>
+        function addNewStudent(){
+            let name = $("#name").val();
+            let address = $("#address").val();
+            let phone = $("#phone").val();
+            let img = $("#img").val();
+            let classesId = $("#classes").val();
+            let student = {
+                name:name,
+                address: address,
+                phone:phone,
+                img:img,
+                classes:{
+                    id:classesId
+                }
+            };
+            $.ajax({
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                type:"POST",
+                data:JSON.stringify(student),
+                url:"/api/students",
+                success:successHandle
+            });
+            event.preventDefault();
+
+        }
+        function successHandle(){
+            $.ajax({
+                type:"GET",
+                url:"/api/students/success",
+                success: function (data){
+                    let content = '<tr>\n' +
+                        '        <th>Name</th>\n' +
+                        '        <th>ADDRESS</th>\n' +
+                        '        <th>PHONE</th>\n' +
+                        '        <th>IMAGE</th>\n' +
+                        '        <th>CLASS</th>\n' +
+                        '        <th>EDIT</th>\n' +
+                        '        <th>DELETE</th>\n' +
+                        '    </tr>';
+                    for (let i = 0; i < data.length; i++) {
+                        content += getStudent(data[i]);
+                    }
+                    document.getElementById("students").innerHTML = content;
+                }
+            });
+            event.preventDefault();
+        }
+        function getStudent(stu){
+            return ` <tr><td>${stu.name}</td>
+                        <td>${stu.address}</td>
+                        <td>${stu.phone}</td>
+                        <td style="height: 68px;width: 84px;"><img style="width: 100%;height: 100%" src="${stu.img}"></td>
+                        <td>${stu.classes.name}</td>`+
+                        `<td><button id="edit"  value="${stu.id}" onclick="viewEditStudent(this)">Edit</button></td>
+                        <td><button id="delete" value="${stu.id}" onclick="deleteStudent(this)">Delete</button></td>
+                    </tr>`;
+        }
+        function deleteStudent(a){
+            let id = a.getAttribute("value");
+            $.ajax({
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                type:"DELETE",
+                url:"/api/students/"+id,
+                success:successHandle
+            });
+            event.preventDefault();
+        }
+
+        function viewEditStudent(a){
+            let id = a.getAttribute("value");
+            $.ajax({
+                type:"GET",
+                url:"/api/students/"+id,
+                success:function (data){
+                    let content = '   <label >Name</label>\n' +
+                        '    <input type="text" id="updateName" value="'+data.name+'">\n' +
+                        '    <label >Address</label>\n' +
+                        '    <input type="text" id="updateAddress" value="'+data.address+'">\n' +
+                        '    <label >Phone</label>\n' +
+                        '    <input type="text" id="updatePhone" value="'+data.phone+'">\n' +
+                        '    <label >Img</label>\n' +
+                        '    <input type="text" id="updateImg" value="'+data.img+'">\n' +
+                        '    <label >Class</label>\n' +
+                        '    <select >   ' +
+                        '<option id="updateClasses"' +
+                        // '                th:text="1"\n' +
+                        '               value="1">1</option>\n' +
+                        '    </select>' +
+                        ' <button id="updateStudent" onclick="updateStudent(this)" value="'+data.id+'">Update</button>';
+                        // '<option id="classes" th:each="class: ${classes}"\n' +
+                        // '                th:text="${class.name}"\n' +
+                        // '                th:value="${class.id}"></option>\n' +
+                        // '    </select>';
+                //     for (let i = 0; i < data.classes.length; i++) {
+                //         content += `<option id="classes"
+                // th:text="${data.classes.get(i).name}"
+                // th:value="${data.classes.get(i).id}"></option>`
+                //     }
+                //     content += `</select>` +
+                //         `<button id="updateStudent" onclick="updateStudent()" value="`+data.id+`">Update</button>`;
+                    document.getElementById("update").innerHTML = content;
+                }
+            });
+            event.preventDefault();
+        }
+        function updateStudent(a){
+            let id = a.getAttribute("value");
+            let name = $("#updateName").getAttribute("value");
+            let address = $("#updateAddress").getAttribute("value");
+            let phone = $("#updatePhone").getAttribute("value");
+            let img = $("#updateImg").getAttribute("value");
+            let classId=$("#updateClasses").getAttribute("value");
+            let student = {
+                id: id,
+                name:name,
+                address:address,
+                phone:phone,
+                img:img,
+                classes:{
+                    id:classId
+                }
+            };
+            $.ajax({
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                type:"PUT",
+                url:"/api/students/"+id,
+                data: JSON.stringify(student),
+                success:successHandle
+            });
+            event.preventDefault();
+        }
+
+
+
+
+    </script>
+</head>
+<body>
+<h1>Student Management</h1>
+<form id="update">
+
+</form>
+<form>
+    <label >Name</label>
+    <input type="text" id="name">
+    <label >Address</label>
+    <input type="text" id="address">
+    <label >Phone</label>
+    <input type="text" id="phone">
+    <label >Img</label>
+    <input type="text" id="img">
+    <label >Class</label>
+    <select >
+        <option id="classes" th:each="class: ${classes}"
+                th:text="${class.name}"
+                th:value="${class.id}"></option>
+    </select>
+</form>
+<button id="create" onclick="addNewStudent()">New</button>
+<table border="1" id="students">
+    <tr>
+        <th>Name</th>
+        <th>ADDRESS</th>
+        <th>PHONE</th>
+        <th>IMAGE</th>
+        <th>CLASS</th>
+        <th>EDIT</th>
+        <th>DELETE</th>
+    </tr>
+    <tr th:each="stu : ${students}">
+        <td th:text="${stu.name}"></td>
+        <td th:text="${stu.address}"></td>
+        <td th:text="${stu.phone}"></td>
+        <td style="height: 68px;width: 84px;"><img style="width: 100%;height: 100%" th:src="${stu.img}"></td>
+        <td th:text="${stu.classes.name}"></td>
+        <td><button id="edit"   th:value="${stu.id}" onclick="viewEditStudent(this)">Edit</button></td>
+        <td><button id="delete" th:value="${stu.id}" onclick="deleteStudent(this)">Delete</button></td>
+    </tr>
+</table>
+</body>
+</html>
